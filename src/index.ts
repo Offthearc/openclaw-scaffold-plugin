@@ -1,7 +1,7 @@
 import { Type, Static } from "typebox";
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import { spawn } from "child_process";
-import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from "fs";
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync, cpSync, statSync } from "fs";
 import { homedir, tmpdir } from "os";
 import { join } from "path";
 
@@ -72,12 +72,27 @@ export default definePluginEntry({
         const templateDir = join(homedir(), "openclaw-templates", type);
         let templateCopied = false;
         if (existsSync(templateDir)) {
-          for (const file of readdirSync(templateDir)) {
-            const src = join(templateDir, file);
-            let content = readFileSync(src, "utf8");
-            content = content.replace(/\{\{PROJECT_NAME\}\}/g, name);
-            writeFileSync(join(projectDir, file), content);
-          }
+          cpSync(templateDir, projectDir, {
+            recursive: true,
+            force: true,
+            filter: (src) => !src.endsWith("/.git") && !src.includes("/.git/"),
+          });
+          const replaceInDir = (dir: string) => {
+            for (const entry of readdirSync(dir)) {
+              const full = join(dir, entry);
+              if (statSync(full).isDirectory()) {
+                replaceInDir(full);
+              } else {
+                try {
+                  const content = readFileSync(full, "utf8");
+                  if (content.includes("{{PROJECT_NAME}}")) {
+                    writeFileSync(full, content.replace(/\{\{PROJECT_NAME\}\}/g, name));
+                  }
+                } catch {} // skip binary files
+              }
+            }
+          };
+          replaceInDir(projectDir);
           templateCopied = true;
         }
 
