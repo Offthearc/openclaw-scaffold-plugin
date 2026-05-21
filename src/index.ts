@@ -10,7 +10,7 @@ const ParamsSchema = Type.Object({
     description: "Project type, e.g. fastapi, react, rust-cli, python-script, django, nextjs, express, etc.",
   }),
   name: Type.String({
-    description: "Project name — lowercase, hyphens, no spaces",
+    description: "Project name — lowercase, underscores only, no hyphens or spaces (e.g. my_chat_app)",
   }),
   description: Type.String({
     description: "Full requirements from the user including all features and constraints",
@@ -64,7 +64,8 @@ export default definePluginEntry({
         "Scaffold a new coding project and invoke Claude Code to build it. Use whenever the user wants to create a new app or project.",
       parameters: ParamsSchema,
       async execute(_id, rawParams): Promise<{ content: { type: "text"; text: string }[]; details: ScaffoldDetails }> {
-        const { type, name, description } = rawParams as Params;
+        const { type, name: rawName, description } = rawParams as Params;
+        const name = rawName.replace(/-/g, "_");
         const projectDir = join(homedir(), "projects", name);
         mkdirSync(projectDir, { recursive: true });
 
