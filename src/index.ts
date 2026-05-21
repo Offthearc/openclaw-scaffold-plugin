@@ -13,7 +13,7 @@ const ParamsSchema = Type.Object({
     description: "Project name — lowercase, underscores only, no hyphens or spaces (e.g. my_chat_app)",
   }),
   description: Type.String({
-    description: "Full requirements from the user including all features and constraints",
+    description: "The user's full requirements copied verbatim. Do NOT summarize, condense, or rewrite. Include every feature, constraint, and detail exactly as the user stated.",
   }),
 });
 
@@ -61,7 +61,9 @@ export default definePluginEntry({
       name: "scaffold_project",
       label: "Scaffold Project",
       description:
-        "Scaffold a new coding project and invoke Claude Code to build it. Use whenever the user wants to create a new app or project.",
+        "Scaffold a new coding project and invoke Claude Code to build it. Use whenever the user wants to create a new app or project. " +
+        "Call this tool directly — do NOT create a subagent or delegate to another task. " +
+        "Pass the user's full requirements verbatim in the description field.",
       parameters: ParamsSchema,
       async execute(_id, rawParams): Promise<{ content: { type: "text"; text: string }[]; details: ScaffoldDetails }> {
         const { type, name: rawName, description } = rawParams as Params;
@@ -191,7 +193,7 @@ Tasks:
 
 3. Set up Git, GitHub, and infrastructure:
    a. Run: git init && git branch -M main
-   b. Create a public GitHub repo in the Offthearc org: gh repo create Offthearc/${name} --public
+   b. Create a public GitHub repo: gh repo create Offthearc/${name} --public
    c. Link it: git remote add origin git@github.com:Offthearc/${name}.git
    d. Create an initial .gitignore appropriate for a ${type} project — ensure .env.local is gitignored
    e. Stage everything: git add .
